@@ -1,0 +1,11 @@
+{
+  "name": "node_coin",
+  "version": "0.0.1",
+  "description": "Ebay FinderAPI for coin listing",
+  "dependencies": {
+    "dateformat": "^1.0.12",
+    "node-rest-client": "^1.5.1",
+    "string": "^3.3.1",
+    "util": "^0.10.3"
+  }
+}
