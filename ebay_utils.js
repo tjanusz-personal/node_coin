@@ -9,6 +9,7 @@ if (processArgs == null) {
 }
 
 client = new Client();
+module.exports.rest_client = client;
 
 // make immediately invoked function to add custom aspects to url arguments
 exports.addCustomAspects = function(urlArguments, aspectValueArray) {
@@ -39,10 +40,25 @@ exports.addItemFilters = function(urlArguments, itemFilterArray) {
 	}
 }
 
-function printResponse(coinType, jsonOuterResponse, yearsNeeded) {
+exports._printResponse = function(coinType, jsonOuterResponse, yearsNeeded) {
+	return printResponse(coinType, jsonOuterResponse, yearsNeeded);
+}
+
+exports._responseHasError = function (jsonOuterResponse, coinType) {
+	return responseHasError(jsonOuterResponse, coinType);
+}
+
+function responseHasError(jsonOuterResponse, coinType) {
 	if (jsonOuterResponse.errorMessage != null) {
 		var errorInfo = jsonOuterResponse.errorMessage[0].error[0];
 		console.log("CALL FAILED for %s! %s, message: %s", coinType, errorInfo.errorId, errorInfo.message);
+		return true;
+	}
+	return false;
+}
+
+function printResponse(coinType, jsonOuterResponse, yearsNeeded) {
+	if (responseHasError(jsonOuterResponse, coinType)) {
 		return;
 	}
 	var jsonResponse = jsonOuterResponse.findItemsByKeywordsResponse[0];
@@ -74,6 +90,10 @@ function needItem(yearsNeeded, title) {
 	return false;
 }
 
+exports._needItem = function(yearsNeeded, title) {
+	return needItem(yearsNeeded, title);
+}
+
 exports.addFinderParams = function(urlArgs) {
 	urlArgs["path"] = { };
 	urlArgs["parameters"] = {};
@@ -96,10 +116,11 @@ exports.addFinderParams = function(urlArgs) {
 }
 
 exports.doPull = function (coinType, urlArgs, yearsNeeded) {
-	var url =  "http://svcs.ebay.com/services/search/FindingService/v1";
+	var url = "http://svcs.ebay.com/services/search/FindingService/v1";
 	var getRes = client.get(url, urlArgs,
         function(data, response){
-			printResponse(coinType, JSON.parse(data), yearsNeeded);
+					var theResponseData =JSON.parse(data);
+					printResponse(coinType, theResponseData, yearsNeeded);
 	}).on('error', function(err) {
 		console.log("INVOCATION ERROR! %s", err);
 	});

@@ -7,5 +7,10 @@
     "node-rest-client": "^1.5.1",
     "string": "^3.3.1",
     "util": "^0.10.3"
+  },
+  "devDependencies": {
+    "chai": "^3.4.1",
+    "mocha": "^2.3.4",
+    "sinon": "^1.17.2"
   }
 }
