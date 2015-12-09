@@ -1,4 +1,5 @@
 var ebayUtils = require('./ebay_utils.js');
+var dateFormat = require('dateformat');
 
 // Ebay custom aspects for Grading Certifications
 var aspectNames = [
@@ -9,7 +10,7 @@ var aspectNames = [
 var itemFilters = [	{ "ListingType": ["Auction", "AuctionWithBIN"] } ];
 var yearsNeeded = ["1971", "1973", "1974", "1975", "1978", "1980", "1981", "1982", "1983", "1984", "1997", "2008"];
 var searchKeywords = "Kennedy Half Dollar";
-
+var maxPrice = 100;
 var urlArgs = {};
 ebayUtils.addFinderParams(urlArgs);
 urlArgs["parameters"]["keywords"] = searchKeywords;
@@ -19,7 +20,6 @@ ebayUtils.addCustomAspects(urlArgs, aspectNames);
 ebayUtils.addItemFilters(urlArgs, itemFilters);
 // console.log(urlArgs);
 
-exports.doPull = function () {
-	ebayUtils.doPull("Kennedy", urlArgs, yearsNeeded);
+exports.doPull = function (callback) {
+	ebayUtils.doPull("Kennedy", urlArgs, yearsNeeded, maxPrice, callback);
 }
-

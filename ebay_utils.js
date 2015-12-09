@@ -40,8 +40,8 @@ exports.addItemFilters = function(urlArguments, itemFilterArray) {
 	}
 }
 
-exports._printResponse = function(coinType, jsonOuterResponse, yearsNeeded) {
-	return printResponse(coinType, jsonOuterResponse, yearsNeeded);
+exports._filterResults = function(coinType, jsonOuterResponse, yearsNeeded, maxPrice) {
+	return filterResults(coinType, jsonOuterResponse, yearsNeeded, maxPrice);
 }
 
 exports._responseHasError = function (jsonOuterResponse, coinType) {
@@ -57,29 +57,40 @@ function responseHasError(jsonOuterResponse, coinType) {
 	return false;
 }
 
-function printResponse(coinType, jsonOuterResponse, yearsNeeded) {
+function filterResults(coinType, jsonOuterResponse, yearsNeeded, maxPrice) {
+	var coinMatches = [];
 	if (responseHasError(jsonOuterResponse, coinType)) {
 		return;
 	}
 	var jsonResponse = jsonOuterResponse.findItemsByKeywordsResponse[0];
 	var searchResult = jsonResponse.searchResult;
 	var items = searchResult[0].item;
-	console.log("COIN TYPE: %s ACK: %s, Items Length: %s", coinType, jsonResponse.ack, items.length);
+	if (items == null) {
+		return coinMatches;
+	}
 	for (var icount = 0; icount < items.length; icount++) {
 		var item = items[icount];
-		if (!needItem(yearsNeeded, item.title)) {
+		var currentPrice = item.sellingStatus[0].currentPrice[0];
+		var currentPriceValue = currentPrice["__value__"];
+		if (!needItem(yearsNeeded, item.title, currentPriceValue, maxPrice)) {
 			continue;
 		}
 		var dateString = dateFormat(item.listingInfo[0].endTime, "mmmm dS, yyyy, h:MM:ss TT");
-		var currentPrice = item.sellingStatus[0].currentPrice[0];
-		console.log("%s -- (%s) %s -- %s", dateString, currentPrice["@currencyId"], currentPrice["__value__"], item.title);
+		var coinMatch = { type: coinType, title: item.title, dateString: dateString, price: currentPriceValue};
+		coinMatches.push(coinMatch);
 	}
+	return coinMatches;
 }
 
-function needItem(yearsNeeded, title) {
+function needItem(yearsNeeded, title, currentPriceValue, maxPrice) {
+	if (currentPriceValue > maxPrice) {
+		return false;
+	}
+
 	if (yearsNeeded == null) {
 		return true;
 	}
+
 	for (var i = 0; i < yearsNeeded.length; i++) {
 		var year = yearsNeeded[i];
 		var boolVal = S(title.toString()).contains(year.toString());
@@ -90,8 +101,8 @@ function needItem(yearsNeeded, title) {
 	return false;
 }
 
-exports._needItem = function(yearsNeeded, title) {
-	return needItem(yearsNeeded, title);
+exports._needItem = function(yearsNeeded, title, currentPriceValue, maxPrice) {
+	return needItem(yearsNeeded, title, currentPriceValue, maxPrice);
 }
 
 exports.addFinderParams = function(urlArgs) {
@@ -115,12 +126,13 @@ exports.addFinderParams = function(urlArgs) {
 //	 	},
 }
 
-exports.doPull = function (coinType, urlArgs, yearsNeeded) {
+exports.doPull = function (coinType, urlArgs, yearsNeeded, maxPrice, callback) {
 	var url = "http://svcs.ebay.com/services/search/FindingService/v1";
 	var getRes = client.get(url, urlArgs,
         function(data, response){
 					var theResponseData =JSON.parse(data);
-					printResponse(coinType, theResponseData, yearsNeeded);
+					var matchedCoins = filterResults(coinType, theResponseData, yearsNeeded, maxPrice);
+					callback(matchedCoins, coinType);
 	}).on('error', function(err) {
 		console.log("INVOCATION ERROR! %s", err);
 	});

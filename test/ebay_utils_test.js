@@ -4,28 +4,40 @@ var chai = require('chai');
 var expect = chai.expect;
 var sinon = require("sinon");
 var events = require("events");
+var dateFormat = require('dateformat');
 
 describe('EbayUtils', function() {
 
 	describe('needItem()', function() {
+		var currentPriceValue, maxPrice;
+
+		beforeEach(function() {
+			currentPriceValue = 100
+			maxPrice = 200;
+  	});
+
 		it("returns 'true' when single year is in title", function() {
-			expect(ebayUtils._needItem(["1909"], "lincoln 1909 cent")).to.be.true;
+			expect(ebayUtils._needItem(["1909"], "lincoln 1909 cent", currentPriceValue, maxPrice)).to.be.true;
 		});
 
 		it("returns 'true' when year is found in title", function() {
-			expect(ebayUtils._needItem(["1909", "1910", "1948"], "lincoln 1909 cent")).to.be.true;
+			expect(ebayUtils._needItem(["1909", "1910", "1948"], "lincoln 1909 cent", currentPriceValue, maxPrice)).to.be.true;
 		});
 
 		it("returns 'false' when year is NOT found in title", function() {
-			expect(ebayUtils._needItem(["1909", "1910", "1948"], "lincoln 2001 cent")).to.be.false;
+			expect(ebayUtils._needItem(["1909", "1910", "1948"], "lincoln 2001 cent", currentPriceValue, maxPrice)).to.be.false;
 		});
 
 		it("returns 'true' when years is null", function() {
-			expect(ebayUtils._needItem(null, "lincoln 2001 cent")).to.be.true;
+			expect(ebayUtils._needItem(null, "lincoln 2001 cent", currentPriceValue, maxPrice)).to.be.true;
 		});
 
 		it("returns 'false' when years is empty", function() {
-			expect(ebayUtils._needItem([], "lincoln 2001 cent")).to.be.false;
+			expect(ebayUtils._needItem([], "lincoln 2001 cent", currentPriceValue, maxPrice)).to.be.false;
+		});
+
+		it("returns 'false' when current price is greater than max price", function() {
+			expect(ebayUtils._needItem(null, "lincoln 2001 cent", 300, 200)).to.be.false;
 		});
 
 	});
@@ -122,7 +134,6 @@ describe('EbayUtils', function() {
 
 	});
 
-
 	describe('responseHasError()', function() {
 
 		it("should return true and log message when error present in response", function() {
@@ -148,7 +159,7 @@ describe('EbayUtils', function() {
 	describe('doPull()', function() {
 		it("should handle error from get request", function() {
 			var clientGetMock = sinon.stub(ebayUtils.rest_client, 'get', restErrorMock({data: 'FooBar'}));
-			ebayUtils.doPull("Mercury", {}, ["2015"]);
+			ebayUtils.doPull("Mercury", {}, ["2015"], 200);
 			clientGetMock.restore();
 		});
 	});
@@ -172,5 +183,41 @@ describe('EbayUtils', function() {
 	        };
 	    }
 	}
+
+	describe('filterResults()', function() {
+		var currentTime = dateFormat("12/09/2015");
+		var dateString = dateFormat(currentTime, "mmmm dS, yyyy, h:MM:ss TT");
+		var searchResult, responseResult, jsonResponse;
+
+		beforeEach(function() {
+			var sellingStatus = {"currentPrice":[{"__value__":50}]};
+			var listingInfo = { "endTime":currentTime};
+			searchResult = [{"title":"coin 1", "sellingStatus": [sellingStatus], "listingInfo":[listingInfo] }];
+			responseResult = {"ack":"Success", "searchResult":[ {"item":searchResult} ]};
+			jsonResponse = { "findItemsByKeywordsResponse":[responseResult]};
+		});
+
+		it("returns empty array when no results are returned", function() {
+			searchResult = [];
+			responseResult = {"ack":"Success", "searchResult":[ searchResult ]};
+			jsonResponse.findItemsByKeywordsResponse = [responseResult];
+			var actualResults = ebayUtils._filterResults("Mercury", jsonResponse, null, 200);
+			expect(actualResults).to.be.empty;
+		});
+
+		it("returns array with one single matching coin item", function() {
+			var actualResults = ebayUtils._filterResults("Mercury", jsonResponse, null, 200);
+			var expectedResult = { "title":"coin 1", "dateString":dateString, "price":50, "type": "Mercury"};
+			expect(actualResults).to.not.be.empty;
+			expect(actualResults[0]).to.eql(expectedResult);
+		});
+
+		it("skips adding coin item if not matched correctly", function() {
+			jsonResponse.findItemsByKeywordsResponse[0].searchResult[0].item[0].sellingStatus[0].currentPrice[0]["__value__"] = 300;
+			var actualResults = ebayUtils._filterResults("Mercury", jsonResponse, null, 200);
+			expect(actualResults).to.be.empty;
+		});
+
+	});
 
 });
