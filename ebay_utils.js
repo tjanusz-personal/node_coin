@@ -75,8 +75,8 @@ function filterResults(coinType, jsonOuterResponse, yearsNeeded, maxPrice) {
 		if (!needItem(yearsNeeded, item.title, currentPriceValue, maxPrice)) {
 			continue;
 		}
-		var dateString = dateFormat(item.listingInfo[0].endTime, "mmmm dS, yyyy, h:MM:ss TT");
-		var coinMatch = { type: coinType, title: item.title, dateString: dateString, price: currentPriceValue};
+		var dateString = dateFormat(item.listingInfo[0].endTime, "mm/dd h:MM:ss TT");
+		var coinMatch = { type: coinType, title: item.title, dateString: dateString, price: currentPriceValue, viewItemURL: item.viewItemURL};
 		coinMatches.push(coinMatch);
 	}
 	return coinMatches;
@@ -105,7 +105,8 @@ exports._needItem = function(yearsNeeded, title, currentPriceValue, maxPrice) {
 	return needItem(yearsNeeded, title, currentPriceValue, maxPrice);
 }
 
-exports.addFinderParams = function(urlArgs) {
+exports.addFinderParams = function(urlArgs, sortOrder) {
+	sortOrder = sortOrder || "EndTimeSoonest";
 	urlArgs["path"] = { };
 	urlArgs["parameters"] = {};
 	var parmArg = urlArgs["parameters"];
@@ -115,7 +116,7 @@ exports.addFinderParams = function(urlArgs) {
 	parmArg["RESPONSE-DATA-FORMAT"]="JSON";
 	parmArg["SECURITY-APPNAME"] = processArgs[0];
 
-	parmArg["sortOrder"]="EndTimeSoonest";
+	parmArg["sortOrder"]=sortOrder;
 	urlArgs["headers"] = {};
 // 	Example parameters required for typical ebay call
 //	 	parameters: {"OPERATION-NAME":"findItemsByKeywords", "SERVICE-VERSION":"1.0.0", "SECURITY-APPNAME":processArgs[0],

@@ -186,13 +186,14 @@ describe('EbayUtils', function() {
 
 	describe('filterResults()', function() {
 		var currentTime = dateFormat("12/09/2015");
-		var dateString = dateFormat(currentTime, "mmmm dS, yyyy, h:MM:ss TT");
+		var dateString = dateFormat(currentTime, "mm/dd h:MM:ss TT");
 		var searchResult, responseResult, jsonResponse;
+		var itemUrl = "http://testUrl";
 
 		beforeEach(function() {
 			var sellingStatus = {"currentPrice":[{"__value__":50}]};
 			var listingInfo = { "endTime":currentTime};
-			searchResult = [{"title":"coin 1", "sellingStatus": [sellingStatus], "listingInfo":[listingInfo] }];
+			searchResult = [{"title":"coin 1", "viewItemURL":itemUrl, "sellingStatus": [sellingStatus], "listingInfo":[listingInfo] }];
 			responseResult = {"ack":"Success", "searchResult":[ {"item":searchResult} ]};
 			jsonResponse = { "findItemsByKeywordsResponse":[responseResult]};
 		});
@@ -207,7 +208,7 @@ describe('EbayUtils', function() {
 
 		it("returns array with one single matching coin item", function() {
 			var actualResults = ebayUtils._filterResults("Mercury", jsonResponse, null, 200);
-			var expectedResult = { "title":"coin 1", "dateString":dateString, "price":50, "type": "Mercury"};
+			var expectedResult = { "title":"coin 1", "dateString":dateString, "price":50, "type": "Mercury", "viewItemURL":itemUrl};
 			expect(actualResults).to.not.be.empty;
 			expect(actualResults[0]).to.eql(expectedResult);
 		});

@@ -15,6 +15,11 @@ function datenum(v, date1904) {
 	return (epoch - new Date(Date.UTC(1899, 11, 30))) / (24 * 60 * 60 * 1000);
 }
 
+function startsWith(str, prefix) {
+	if (!Array.isArray(str)) return false;
+	return str[0].slice(0, prefix.length) == prefix;
+}
+
 function sheet_from_array_of_arrays(data, opts) {
 	var ws = {};
 	var range = {s: {c:10000000, r:10000000}, e: {c:0, r:0 }};
@@ -33,8 +38,14 @@ function sheet_from_array_of_arrays(data, opts) {
 			else if(cell.v instanceof Date) {
 				cell.t = 'n'; cell.z = XLSX.SSF._table[14];
 				cell.v = datenum(cell.v);
+			} else if (startsWith(cell.v, 'http' )) {
+				// Hack to try and set this to 'link' type but does not seem to work
+				var cellStringValue = data[R][C][0];
+				cell.l = { Target: cellStringValue, tooltip: 'test toolip'};
+				cell.v = cellStringValue;
+			} else {
+				cell.t = 's';
 			}
-			else cell.t = 's';
 
 			ws[cell_ref] = cell;
 		}
@@ -43,18 +54,31 @@ function sheet_from_array_of_arrays(data, opts) {
 	return ws;
 }
 
-exports.writeCoinsToXlSX = function(resultData, fileName) {
+exports.writeCoinsToXlSX = function(resultData, binResults, fileName) {
   var wb = new Workbook();
-  var ws_name = "CoinListing";
+  var ws_name = "Auctions";
+	var ws_name2 = "BIN";
+	var headers = ["Type", "Date", "Price", "Title", "ViewItemURL"];
 
-  var data = [ ["Type", "Date", "Price", "Title"]];
+  var auctionData = [ headers ];
   resultData.forEach(function(item) {
-    var coinValues = [item.type, item.dateString, item.price, item.title];
-    data.push(coinValues);
+    var coinValues = [item.type, item.dateString, item.price, item.title, item.viewItemURL];
+    auctionData.push(coinValues);
   });
 
-  var wb = new Workbook(), ws = sheet_from_array_of_arrays(data);
+	var ws = sheet_from_array_of_arrays(auctionData);
   wb.SheetNames.push(ws_name);
   wb.Sheets[ws_name] = ws;
-  XLSX.writeFile(wb, 'test.xlsx');
+
+	// add in second tab
+	var binData = [ headers ];
+  binResults.forEach(function(item) {
+    var coinValues = [item.type, item.dateString, item.price, item.title, item.viewItemURL];
+    binData.push(coinValues);
+  });
+	var ws2 = sheet_from_array_of_arrays(binData);
+	wb.SheetNames.push(ws_name2);
+  wb.Sheets[ws_name2] = ws2;
+
+  XLSX.writeFile(wb, fileName);
 }

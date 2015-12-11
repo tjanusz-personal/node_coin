@@ -7,20 +7,20 @@ var aspectNames = [
 	{ "Grade": "MS 66"}
 ];
 // Ebay itemFilters for ListingTypes I care about
-var itemFilters = [	{ "ListingType": ["Auction", "AuctionWithBIN"] } ];
-var yearsNeeded = ["1939", "1952", "1953", "1954", "1955", "1958", "1961", "1964", "1963", "1976", "1978", "1982", "1983",
-	"1985", "1991", "1995", "1997", "1998", "2000", "2002", "2003", "2007", "2008", "2009"];
-var searchKeywords = "Jefferson Nickels";
+var itemFilters = [	{ "ListingType": ["FixedPrice"] } ];
+var yearsNeeded = ["1971", "1973", "1974", "1975", "1978", "1980", "1981", "1982", "1983", "1984", "1997", "2008"];
+var searchKeywords = "Kennedy Half Dollar";
 var maxPrice = 100;
-
 var urlArgs = {};
 ebayUtils.addFinderParams(urlArgs);
+ebayUtils.addFinderParams(urlArgs, "PricePlusShippingLowest");
 urlArgs["parameters"]["keywords"] = searchKeywords;
-urlArgs["parameters"]["paginationInput.entriesPerPage"] = 50;
+urlArgs["parameters"]["paginationInput.entriesPerPage"] = 100;
 
 ebayUtils.addCustomAspects(urlArgs, aspectNames);
 ebayUtils.addItemFilters(urlArgs, itemFilters);
+// console.log(urlArgs);
 
 exports.doPull = function (callback) {
-	ebayUtils.doPull("Jefferson", urlArgs, yearsNeeded, maxPrice, callback);
+	ebayUtils.doPull("KennedyBIN", urlArgs, yearsNeeded, maxPrice, callback);
 }
