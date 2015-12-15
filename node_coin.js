@@ -17,8 +17,10 @@ var binData = [];
 var runCount = 0;
 var maxRuns = 8;
 
-function printResults(results, coinType) {
-	console.log("COIN TYPE: %s Matches: %s", coinType, results.length);
+function printResults(coinResults, coinType) {
+	var results = coinResults["results"];
+	var paginationOutput = coinResults["paginationOutput"]
+	console.log("COIN TYPE: %s Matches: %s, Pages: %s", coinType, results.length, paginationOutput.totalEntries);
 	results.forEach(function(coinResult) {
 		if (coinType.indexOf("BIN") > 0) {
 			binData.push(coinResult);

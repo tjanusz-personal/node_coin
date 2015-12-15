@@ -21,6 +21,30 @@ ebayUtils.addCustomAspects(urlArgs, aspectNames);
 ebayUtils.addItemFilters(urlArgs, itemFilters);
 // console.log(urlArgs);
 
+var allResults = [];
+var globalCallback = {};
+var finalResults = { results: [] };
+
+function processPageResult(coinResults, coinType) {
+	var paginationOutput = coinResults["paginationOutput"];
+	var currentPageNumber = parseInt(paginationOutput.pageNumber);
+	var nextPageNum = currentPageNumber + 1;
+	var results = coinResults["results"];
+	finalResults["results"] = finalResults["results"].concat(results);
+
+	if (currentPageNumber	<= 3) {
+		console.log("*** FOUND A PAGE: %s Matches: %s, PageNumber: %s, NextPage: %s", coinType, results.length, currentPageNumber, nextPageNum);
+		urlArgs["parameters"]["paginationInput.pageNumber"] = nextPageNum;
+		ebayUtils.doPull("KennedyBIN", urlArgs, yearsNeeded, maxPrice, processPageResult);
+	} else {
+		// add last page data
+		finalResults["paginationOutput"] = coinResults["paginationOutput"];
+		globalCallback(finalResults, coinType);
+	}
+}
+
 exports.doPull = function (callback) {
-	ebayUtils.doPull("KennedyBIN", urlArgs, yearsNeeded, maxPrice, callback);
+	// store away global callback
+	globalCallback = callback;
+	ebayUtils.doPull("KennedyBIN", urlArgs, yearsNeeded, maxPrice, processPageResult);
 }

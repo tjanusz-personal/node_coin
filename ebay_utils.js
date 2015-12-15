@@ -59,6 +59,9 @@ function responseHasError(jsonOuterResponse, coinType) {
 
 function filterResults(coinType, jsonOuterResponse, yearsNeeded, maxPrice) {
 	var coinMatches = [];
+	var coinResults = {};
+	coinResults["results"] = coinMatches;
+
 	if (responseHasError(jsonOuterResponse, coinType)) {
 		return;
 	}
@@ -66,7 +69,7 @@ function filterResults(coinType, jsonOuterResponse, yearsNeeded, maxPrice) {
 	var searchResult = jsonResponse.searchResult;
 	var items = searchResult[0].item;
 	if (items == null) {
-		return coinMatches;
+		return coinResults;
 	}
 	for (var icount = 0; icount < items.length; icount++) {
 		var item = items[icount];
@@ -79,7 +82,9 @@ function filterResults(coinType, jsonOuterResponse, yearsNeeded, maxPrice) {
 		var coinMatch = { type: coinType, title: item.title, dateString: dateString, price: currentPriceValue, viewItemURL: item.viewItemURL};
 		coinMatches.push(coinMatch);
 	}
-	return coinMatches;
+ 	var paginationOutput = jsonResponse.paginationOutput[0];
+	coinResults["paginationOutput"] = paginationOutput;
+	return coinResults;
 }
 
 function needItem(yearsNeeded, title, currentPriceValue, maxPrice) {
