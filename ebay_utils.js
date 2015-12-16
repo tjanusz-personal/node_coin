@@ -17,9 +17,9 @@ exports.addCustomAspects = function(urlArguments, aspectValueArray) {
 		var aspect = aspectValueArray[count];
 		var aspectNameString = util.format("aspectFilter(%s).aspectName", count);
 		for (var prop in aspect) {
-			urlArguments["parameters"][aspectNameString]=prop;
+			urlArguments.parameters[aspectNameString]=prop;
 			var aspectValueString = util.format("aspectFilter(%s).aspectValueName", count);
-			urlArguments["parameters"][aspectValueString]=aspect[prop];
+			urlArguments.parameters[aspectValueString]=aspect[prop];
 		}
 	}
 }
@@ -30,11 +30,11 @@ exports.addItemFilters = function(urlArguments, itemFilterArray) {
 		var itemFilter = itemFilterArray[count];
 		var filterNameString = util.format("itemFilter(%s).name", count);
 		for (var prop in itemFilter) {
-			urlArguments["parameters"][filterNameString]=prop;
+			urlArguments.parameters[filterNameString]=prop;
 			var propValues = itemFilter[prop];
 			for (var valueCount = 0; valueCount < propValues.length; valueCount++) {
 				var filterValueString = util.format("itemFilter(%s).value(%s)", count, valueCount);
-				urlArguments["parameters"][filterValueString]=propValues[valueCount];
+				urlArguments.parameters[filterValueString]=propValues[valueCount];
 			}
 		}
 	}
@@ -57,10 +57,9 @@ function responseHasError(jsonOuterResponse, coinType) {
 	return false;
 }
 
-function filterResults(coinType, jsonOuterResponse, yearsNeeded, maxPrice) {
+function filterResults(coinType, jsonOuterResponse, yearsNeeded, maxPrice, skipWords) {
 	var coinMatches = [];
-	var coinResults = {};
-	coinResults["results"] = coinMatches;
+	var coinResults = {results: coinMatches};
 
 	if (responseHasError(jsonOuterResponse, coinType)) {
 		return;
@@ -75,9 +74,15 @@ function filterResults(coinType, jsonOuterResponse, yearsNeeded, maxPrice) {
 		var item = items[icount];
 		var currentPrice = item.sellingStatus[0].currentPrice[0];
 		var currentPriceValue = currentPrice["__value__"];
-		if (!needItem(yearsNeeded, item.title, currentPriceValue, maxPrice)) {
+		// See if this result is something I need
+		if (!needCoin(yearsNeeded, item.title, currentPriceValue, maxPrice)) {
 			continue;
 		}
+		// filter out any wildcards I know I don't need on matches
+		if (coinShouldBeFiltered(item.title, skipWords)) {
+			continue;
+		}
+
 		var dateString = dateFormat(item.listingInfo[0].endTime, "mm/dd h:MM:ss TT");
 		var coinMatch = { type: coinType, title: item.title, dateString: dateString, price: currentPriceValue, viewItemURL: item.viewItemURL};
 		coinMatches.push(coinMatch);
@@ -87,7 +92,7 @@ function filterResults(coinType, jsonOuterResponse, yearsNeeded, maxPrice) {
 	return coinResults;
 }
 
-function needItem(yearsNeeded, title, currentPriceValue, maxPrice) {
+function needCoin(yearsNeeded, title, currentPriceValue, maxPrice) {
 	if (currentPriceValue > maxPrice) {
 		return false;
 	}
@@ -106,22 +111,16 @@ function needItem(yearsNeeded, title, currentPriceValue, maxPrice) {
 	return false;
 }
 
-exports._needItem = function(yearsNeeded, title, currentPriceValue, maxPrice) {
-	return needItem(yearsNeeded, title, currentPriceValue, maxPrice);
+exports._needCoin = function(yearsNeeded, title, currentPriceValue, maxPrice) {
+	return needCoin(yearsNeeded, title, currentPriceValue, maxPrice);
 }
 
-exports.addFinderParams = function(urlArgs, sortOrder) {
+exports.addFinderParams = function(urlArgs, searchKeywords, entriesPerPage, sortOrder) {
 	sortOrder = sortOrder || "EndTimeSoonest";
 	urlArgs["path"] = { };
-	urlArgs["parameters"] = {};
-	var parmArg = urlArgs["parameters"];
-	parmArg["OPERATION-NAME"]="findItemsByKeywords";
-	parmArg["SERVICE-VERSION"]="1.0.0";
-	parmArg["GLOBAL-ID"]="EBAY-US";
-	parmArg["RESPONSE-DATA-FORMAT"]="JSON";
-	parmArg["SECURITY-APPNAME"] = processArgs[0];
-
-	parmArg["sortOrder"]=sortOrder;
+	urlArgs["parameters"] = {"OPERATION-NAME":"findItemsByKeywords", "SERVICE-VERSION":"1.0.0", "GLOBAL-ID":"EBAY-US",
+		"RESPONSE-DATA-FORMAT":"JSON", "SECURITY-APPNAME":processArgs[0], "sortOrder":sortOrder, "keywords": searchKeywords,
+		"paginationInput.entriesPerPage": entriesPerPage};
 	urlArgs["headers"] = {};
 // 	Example parameters required for typical ebay call
 //	 	parameters: {"OPERATION-NAME":"findItemsByKeywords", "SERVICE-VERSION":"1.0.0", "SECURITY-APPNAME":processArgs[0],
@@ -132,14 +131,50 @@ exports.addFinderParams = function(urlArgs, sortOrder) {
 //	 	},
 }
 
-exports.doPull = function (coinType, urlArgs, yearsNeeded, maxPrice, callback) {
+exports.doPull = function (coinType, urlArgs, yearsNeeded, maxPrice, skipWords, callback) {
 	var url = "http://svcs.ebay.com/services/search/FindingService/v1";
 	var getRes = client.get(url, urlArgs,
         function(data, response){
 					var theResponseData =JSON.parse(data);
-					var matchedCoins = filterResults(coinType, theResponseData, yearsNeeded, maxPrice);
+					var matchedCoins = filterResults(coinType, theResponseData, yearsNeeded, maxPrice, skipWords);
 					callback(matchedCoins, coinType);
 	}).on('error', function(err) {
 		console.log("INVOCATION ERROR! %s", err);
 	});
+}
+
+exports._coinShouldBeFiltered = function(coinResult, skipWords) {
+	return coinShouldBeFiltered(coinResult, skipWords);
+}
+
+function coinShouldBeFiltered(coinResult, skipWords) {
+	if (skipWords == null) return false;
+	for(var count = 0; count < skipWords.length; count++) {
+			var itemToRemove = skipWords[count];
+			var boolVal = S(coinResult.toString()).contains(itemToRemove.toString());
+			if (boolVal) {
+				return true;
+			}
+	}
+	return false;
+}
+
+exports.filterResultsByItems = function(results, skipWords) {
+	var filteredResults = [];
+
+	for(var count = 0; count < results.length; count++) {
+		var coinResult = results[count];
+		var title = coinResult.title;
+		if (coinShouldBeFiltered(title, skipWords)) {
+			continue;
+		}
+		filteredResults.push(coinResult);
+	}
+	return filteredResults;
+}
+
+exports.buildEbayRequestObject = function(urlArgs, searchKeywords, pageSize, aspectNames, itemFilters, sortOrder) {
+	this.addFinderParams(urlArgs, searchKeywords, pageSize, sortOrder);
+	this.addCustomAspects(urlArgs, aspectNames);
+	this.addItemFilters(urlArgs, itemFilters);
 }

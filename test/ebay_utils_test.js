@@ -8,7 +8,7 @@ var dateFormat = require('dateformat');
 
 describe('EbayUtils', function() {
 
-	describe('needItem()', function() {
+	describe('needCoin()', function() {
 		var currentPriceValue, maxPrice;
 
 		beforeEach(function() {
@@ -17,27 +17,27 @@ describe('EbayUtils', function() {
   	});
 
 		it("returns 'true' when single year is in title", function() {
-			expect(ebayUtils._needItem(["1909"], "lincoln 1909 cent", currentPriceValue, maxPrice)).to.be.true;
+			expect(ebayUtils._needCoin(["1909"], "lincoln 1909 cent", currentPriceValue, maxPrice)).to.be.true;
 		});
 
 		it("returns 'true' when year is found in title", function() {
-			expect(ebayUtils._needItem(["1909", "1910", "1948"], "lincoln 1909 cent", currentPriceValue, maxPrice)).to.be.true;
+			expect(ebayUtils._needCoin(["1909", "1910", "1948"], "lincoln 1909 cent", currentPriceValue, maxPrice)).to.be.true;
 		});
 
 		it("returns 'false' when year is NOT found in title", function() {
-			expect(ebayUtils._needItem(["1909", "1910", "1948"], "lincoln 2001 cent", currentPriceValue, maxPrice)).to.be.false;
+			expect(ebayUtils._needCoin(["1909", "1910", "1948"], "lincoln 2001 cent", currentPriceValue, maxPrice)).to.be.false;
 		});
 
 		it("returns 'true' when years is null", function() {
-			expect(ebayUtils._needItem(null, "lincoln 2001 cent", currentPriceValue, maxPrice)).to.be.true;
+			expect(ebayUtils._needCoin(null, "lincoln 2001 cent", currentPriceValue, maxPrice)).to.be.true;
 		});
 
 		it("returns 'false' when years is empty", function() {
-			expect(ebayUtils._needItem([], "lincoln 2001 cent", currentPriceValue, maxPrice)).to.be.false;
+			expect(ebayUtils._needCoin([], "lincoln 2001 cent", currentPriceValue, maxPrice)).to.be.false;
 		});
 
 		it("returns 'false' when current price is greater than max price", function() {
-			expect(ebayUtils._needItem(null, "lincoln 2001 cent", 300, 200)).to.be.false;
+			expect(ebayUtils._needCoin(null, "lincoln 2001 cent", 300, 200)).to.be.false;
 		});
 
 	});
@@ -47,8 +47,8 @@ describe('EbayUtils', function() {
 
 		beforeEach(function() {
 		   urlArgs = {};
-			 ebayUtils.addFinderParams(urlArgs);
-			 params = urlArgs["parameters"];
+			 ebayUtils.addFinderParams(urlArgs, "searchKeywords", 100);
+			 params = urlArgs.parameters;
   		});
 
 		it("defaults the object properties to include required ebay defaults", function() {
@@ -62,35 +62,52 @@ describe('EbayUtils', function() {
 				expect(params).to.include( {"GLOBAL-ID": "EBAY-US"});
 		});
 
-		it("defaults the 'parameters' property to JSON RESPONSE-DATA-FORMAT", function() {
+		it("defaults the 'parameters' RESPONSE-DATA-FORMAT property to JSON", function() {
 				expect(params).to.include( {"RESPONSE-DATA-FORMAT": "JSON"});
 		});
 
-		it("defaults the 'parameters' property to 'sortOrder' ending soonest", function() {
-				expect(params).to.include( {"sortOrder": "EndTimeSoonest"});
+		it("defaults the 'parameters' sortOrder property to 'EndTimeSoonest'", function() {
+				expect(params).to.include( {sortOrder: "EndTimeSoonest"});
 		});
 
+		it("sets the 'parameters' keywords property correctly", function() {
+			expect(params).to.include( {keywords:"searchKeywords"});
+		});
+
+		it("sets the 'parameters' paginationInput.entriesPerPage correctly", function() {
+			expect(params).to.include( {"paginationInput.entriesPerPage":100});
+		});
+
+		it("defaults the 'parameters' sortOrder property to 'EndTimeSoonest'", function() {
+			expect(params).to.include( {sortOrder:"EndTimeSoonest"});
+		});
+
+		it("sets the 'parameters' sortOrder property correctly if passed to function", function() {
+			urlArgs = {};
+			ebayUtils.addFinderParams(urlArgs, "searchKeywords", 100, "PricePlusShippingLowest");
+			expect(urlArgs.parameters).to.include( {sortOrder:"PricePlusShippingLowest"});
+		});
 	});
 
 	describe('addItemFilters()', function() {
 		var urlArgs = { };
 
 		beforeEach(function() {
-		   urlArgs = { "parameters": {} };
+		   urlArgs = { parameters: {} };
   		});
 
 		it("modifies 'paramters' property to include single filter name value", function() {
-			var itemFilters = [{ "ListingType": ["Auction"] }];
+			var itemFilters = [{ ListingType: ["Auction"] }];
 			ebayUtils.addItemFilters(urlArgs, itemFilters);
 			var expectedObject = { 'itemFilter(0).name':'ListingType', 'itemFilter(0).value(0)':'Auction'};
-			expect(urlArgs['parameters']).to.eql(expectedObject);
+			expect(urlArgs.parameters).to.eql(expectedObject);
 		});
 
 		it("modifies 'paramters' property to include multiple filter name values", function() {
-			var itemFilters = [{ "ListingType": ["Auction", "AuctionWithBIN"] }]; // ,
+			var itemFilters = [{ ListingType: ["Auction", "AuctionWithBIN"] }]; // ,
 			ebayUtils.addItemFilters(urlArgs, itemFilters);
 			var expectedObject = { 'itemFilter(0).name':'ListingType', 'itemFilter(0).value(0)':'Auction', 'itemFilter(0).value(1)':'AuctionWithBIN'};
-			expect(urlArgs['parameters']).to.eql(expectedObject);
+			expect(urlArgs.parameters).to.eql(expectedObject);
 		});
 
 	});
@@ -99,32 +116,32 @@ describe('EbayUtils', function() {
 		var urlArgs = { };
 
 		beforeEach(function() {
-		   urlArgs = { "parameters": {} };
+		   urlArgs = { parameters: {} };
   		});
 
 		it("modifies 'paramters' property to include single aspect name value", function() {
-			var aspectNames = [{ "Certification":"NGC"}];
+			var aspectNames = [{ Certification:"NGC"}];
 			ebayUtils.addCustomAspects(urlArgs, aspectNames);
 			var expectedObject = { 'aspectFilter(0).aspectName':'Certification', 'aspectFilter(0).aspectValueName':'NGC'};
-			expect(urlArgs['parameters']).to.eql(expectedObject);
+			expect(urlArgs.parameters).to.eql(expectedObject);
 		});
 
 		it("modifies 'parameters' property to include mutliple aspect name value", function() {
-			var aspectNames = [{ "Certification":"NGC"}, {"Certification":"PCGS"} ];
+			var aspectNames = [{ Certification:"NGC"}, {Certification:"PCGS"} ];
 			ebayUtils.addCustomAspects(urlArgs, aspectNames);
 			var expectedObject = { 'aspectFilter(0).aspectName':'Certification', 'aspectFilter(0).aspectValueName':'NGC',
 				'aspectFilter(1).aspectName':'Certification', 'aspectFilter(1).aspectValueName':'PCGS'
 			};
-			expect(urlArgs['parameters']).to.eql(expectedObject);
+			expect(urlArgs.parameters).to.eql(expectedObject);
 		});
 
 		it("does not modify 'parameters' property when passed no arguments", function() {
 			ebayUtils.addCustomAspects(urlArgs, []);
-			expect(urlArgs['parameters']).to.be.empty;
+			expect(urlArgs.parameters).to.be.empty;
 		});
 
 		it("throws 'TypeError' if missing 'parameters' property on object", function() {
-			var aspectNames = [{ "Certification":"NGC"}];
+			var aspectNames = [{ Certification:"NGC"}];
 			chai.expect(function() {ebayUtils.addCustomAspects({}, aspectNames)}).to.throw(TypeError);
 		});
 
@@ -140,7 +157,7 @@ describe('EbayUtils', function() {
 			var mock = sinon.mock(console);
 			mock.expects('log').once();
 
-			var jsonOuterResponse = { "errorMessage":[{"error":"this is an error"}]};
+			var jsonOuterResponse = { errorMessage:[{error:"this is an error"}]};
 			expect(ebayUtils._responseHasError(jsonOuterResponse, "Mercury")).to.be.true;
 			mock.verify();
 		});
@@ -149,7 +166,7 @@ describe('EbayUtils', function() {
 			var mock = sinon.mock(console);
 			mock.expects('log').never();
 
-			var jsonOuterResponse = { "findItemsByKeywordsResponse":[{}]};
+			var jsonOuterResponse = { findItemsByKeywordsResponse:[{}]};
 			expect(ebayUtils._responseHasError(jsonOuterResponse, "Mercury")).to.be.false;
 			mock.verify();
 		});
@@ -159,7 +176,7 @@ describe('EbayUtils', function() {
 	describe('doPull()', function() {
 		it("should handle error from get request", function() {
 			var clientGetMock = sinon.stub(ebayUtils.rest_client, 'get', restErrorMock({data: 'FooBar'}));
-			ebayUtils.doPull("Mercury", {}, ["2015"], 200);
+			ebayUtils.doPull("Mercury", {}, ["2015"], 200, ["1953-D"]);
 			clientGetMock.restore();
 		});
 	});
@@ -189,33 +206,72 @@ describe('EbayUtils', function() {
 		var dateString = dateFormat(currentTime, "mm/dd h:MM:ss TT");
 		var searchResult, responseResult, jsonResponse;
 		var itemUrl = "http://testUrl";
+		var skipWords = ["1953-D"];
 
 		beforeEach(function() {
-			var sellingStatus = {"currentPrice":[{"__value__":50}]};
-			var listingInfo = { "endTime":currentTime};
-			searchResult = [{"title":"coin 1", "viewItemURL":itemUrl, "sellingStatus": [sellingStatus], "listingInfo":[listingInfo] }];
-			responseResult = {"ack":"Success", "searchResult":[ {"item":searchResult} ]};
-			jsonResponse = { "findItemsByKeywordsResponse":[responseResult]};
+			var sellingStatus = {currentPrice:[{"__value__":50}]};
+			var listingInfo = { endTime:currentTime};
+			searchResult = [{title:"coin 1", viewItemURL:itemUrl, sellingStatus: [sellingStatus], listingInfo:[listingInfo] }];
+			paginationOutput = {pageNumber: 1, totalPages: 2, totalEntries: 100};
+			responseResult = {ack:"Success", searchResult:[ {item:searchResult}], paginationOutput:[paginationOutput]};
+			jsonResponse = { findItemsByKeywordsResponse:[responseResult]};
 		});
 
 		it("returns empty array when no results are returned", function() {
 			searchResult = [];
-			responseResult = {"ack":"Success", "searchResult":[ searchResult ]};
+			responseResult = {ack:"Success", searchResult:[ searchResult ]};
 			jsonResponse.findItemsByKeywordsResponse = [responseResult];
-			var actualResults = ebayUtils._filterResults("Mercury", jsonResponse, null, 200);
-			expect(actualResults).to.be.empty;
+			var actualResults = ebayUtils._filterResults("Mercury", jsonResponse, null, 200, skipWords);
+			expect(actualResults.results).to.be.empty;
 		});
 
 		it("returns array with one single matching coin item", function() {
-			var actualResults = ebayUtils._filterResults("Mercury", jsonResponse, null, 200);
-			var expectedResult = { "title":"coin 1", "dateString":dateString, "price":50, "type": "Mercury", "viewItemURL":itemUrl};
-			expect(actualResults).to.not.be.empty;
-			expect(actualResults[0]).to.eql(expectedResult);
+			var actualResults = ebayUtils._filterResults("Mercury", jsonResponse, null, 200, skipWords);
+			var expectedResult = { title:"coin 1", dateString:dateString, price:50, type: "Mercury", viewItemURL:itemUrl};
+			expect(actualResults.results).to.not.be.empty;
+			expect(actualResults.results[0]).to.eql(expectedResult);
 		});
 
 		it("skips adding coin item if not matched correctly", function() {
 			jsonResponse.findItemsByKeywordsResponse[0].searchResult[0].item[0].sellingStatus[0].currentPrice[0]["__value__"] = 300;
-			var actualResults = ebayUtils._filterResults("Mercury", jsonResponse, null, 200);
+			var actualResults = ebayUtils._filterResults("Mercury", jsonResponse, null, 200, skipWords);
+			expect(actualResults.results).to.be.empty;
+		});
+
+	});
+
+	describe("coinShouldBeFiltered()", function() {
+		it("returns 'true' if coin title contains item in filter array", function() {
+			expect(ebayUtils._coinShouldBeFiltered("1953 D nickel in good condition", ["1953 D", "1953-D"])).to.be.true;
+		});
+
+		it("returns 'false' if coin title does NOT contains item in filter array", function() {
+			expect(ebayUtils._coinShouldBeFiltered("1958 D nickel in good condition", ["1953 D", "1953-D"])).to.be.false;
+		});
+
+		it("returns 'false' if coin title is blank", function() {
+			expect(ebayUtils._coinShouldBeFiltered("", ["1953 D"])).to.be.false;
+		});
+
+		it("returns 'false' if filter array empty", function() {
+			expect(ebayUtils._coinShouldBeFiltered("1958 nickel in good condition", [])).to.be.false;
+		});
+
+		it("returns 'false' if filter array undefined", function() {
+			expect(ebayUtils._coinShouldBeFiltered("1958 nickel in good condition")).to.be.false;
+		});
+	});
+
+	describe("filterResultsByItems()", function() {
+		it("returns results array with all coins having dates in matching array removed", function() {
+			var results = [ {title:"1953 D nickel"}, {title:"1958 nickel"}, {title:"1960 nickel"}];
+			var actualResults = ebayUtils.filterResultsByItems(results, ["1953 D", "1960"]);
+			expect(actualResults).to.eql([{title:"1958 nickel"}]);
+		});
+
+		it("returns empty array if all coins have dates matching array", function() {
+			var results = [ {title:"1953 D nickel"}, {title:"1960 nickel"}];
+			var actualResults = ebayUtils.filterResultsByItems(results, ["1953 D", "1960"]);
 			expect(actualResults).to.be.empty;
 		});
 
