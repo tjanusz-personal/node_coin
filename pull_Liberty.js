@@ -13,6 +13,6 @@ var skipWords = ["Scratched", "Damaged", "Scratch", "Damage"];
 var urlArgs = {};
 ebayUtils.buildEbayRequestObject(urlArgs, "Liberty Nickel", 50, aspectNames, itemFilters);
 
-exports.doPull = function (callback) {
-	ebayUtils.doPull("Liberty", urlArgs, yearsNeeded, 250, skipWords, callback);
+exports.doPull = function () {
+	return ebayUtils.doPull("Liberty", urlArgs, yearsNeeded, 250, skipWords);
 }

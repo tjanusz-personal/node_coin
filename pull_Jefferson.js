@@ -16,5 +16,5 @@ var urlArgs = {};
 ebayUtils.buildEbayRequestObject(urlArgs, "Jefferson Nickels", 50, aspectNames, itemFilters);
 
 exports.doPull = function (callback) {
-	ebayUtils.doPull("Jefferson", urlArgs, yearsNeeded, 100, skipWords, callback);
+	return ebayUtils.doPull("Jefferson", urlArgs, yearsNeeded, 100, skipWords);
 }

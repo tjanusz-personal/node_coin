@@ -13,6 +13,6 @@ var skipWords = ["1943-S", "1943-P"];
 var urlArgs = {};
 ebayUtils.buildEbayRequestObject(urlArgs, "Mercury dime", 50, aspectNames, itemFilters);
 
-exports.doPull = function (callback) {
-	ebayUtils.doPull("Mercury", urlArgs, yearsNeeded, 100, skipWords, callback);
+exports.doPull = function () {
+	return ebayUtils.doPull("Mercury", urlArgs, yearsNeeded, 100, skipWords);
 }

@@ -14,6 +14,6 @@ var skipWords = [];
 var urlArgs = {};
 ebayUtils.buildEbayRequestObject(urlArgs, "1909 lincoln cent", 10, aspectNames, itemFilters);
 
-exports.doPull = function (callback) {
-	ebayUtils.doPull("Lincoln", urlArgs, yearsNeeded, 200, skipWords, callback);
+exports.doPull = function () {
+	return ebayUtils.doPull("Lincoln", urlArgs, yearsNeeded, 200, skipWords);
 }

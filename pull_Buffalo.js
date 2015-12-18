@@ -13,6 +13,6 @@ var skipWords = [];
 var urlArgs = {};
 ebayUtils.buildEbayRequestObject(urlArgs, "Buffalo Nickel", 50, aspectNames, itemFilters);
 
-exports.doPull = function (callback) {
-	ebayUtils.doPull("Buffalo", urlArgs, yearsNeeded, 250, skipWords, callback);
+exports.doPull = function () {
+	return ebayUtils.doPull("Buffalo", urlArgs, yearsNeeded, 250, skipWords);
 }

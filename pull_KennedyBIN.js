@@ -1,6 +1,8 @@
 var ebayUtils = require('./ebay_utils.js');
 var dateFormat = require('dateformat');
 var S = require('string');
+var Q = require("q");
+var clone = require("clone");
 
 // Ebay custom aspects for Grading Certifications
 var aspectNames = [
@@ -14,31 +16,16 @@ var skipWords = ["1971 D", "1971-D", "1973 D", "1973-D", "2008 P", "2008-P", "19
 var maxPrice = 50;
 var urlArgs = {};
 ebayUtils.buildEbayRequestObject(urlArgs, "Kennedy Half Dollar", 100, aspectNames, itemFilters, "PricePlusShippingLowest");
+var coinType = "KennedyBIN";
 
-var globalCallback = {};
-var finalResults = { results: [], paginationOutput: {} };
-
-function processPageResult(coinResults, coinType) {
-	var paginationOutput = coinResults.paginationOutput;
-	var currentPageNumber = parseInt(paginationOutput.pageNumber);
-	var nextPageNum = currentPageNumber + 1;
-	var results = coinResults.results;
-
-	finalResults.results = finalResults.results.concat(results);
-
-	if (currentPageNumber	<= 4) {
-		console.log("*** FOUND A PAGE: %s Matches: %s, PageNumber: %s, NextPage: %s", coinType, results.length, currentPageNumber, nextPageNum);
-		urlArgs.parameters["paginationInput.pageNumber"] = nextPageNum;
-		ebayUtils.doPull("KennedyBIN", urlArgs, yearsNeeded, maxPrice, skipWords, processPageResult);
-	} else {
-		// add last page data
-		finalResults.paginationOutput = coinResults.paginationOutput;
-		globalCallback(finalResults, coinType);
+exports.doPull = function () {
+	var pagesToCall = [];
+	// loop through and build separate page request promises
+	for (var count = 1; count <=4; count++) {
+		var urlArgs2 = clone(urlArgs); // need to ensure separate objects
+		urlArgs2.parameters["paginationInput.pageNumber"] = count;
+		pagesToCall.push(ebayUtils.doPull(coinType, urlArgs2, yearsNeeded, maxPrice, skipWords));
 	}
-}
-
-exports.doPull = function (callback) {
-	// store away global callback
-	globalCallback = callback;
-	ebayUtils.doPull("KennedyBIN", urlArgs, yearsNeeded, maxPrice, skipWords, processPageResult);
+	var allPromise = Q.all(pagesToCall);
+	return allPromise;
 }

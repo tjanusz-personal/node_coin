@@ -2,6 +2,7 @@ var Client = require('node-rest-client').Client;
 var util = require('util');
 var dateFormat = require('dateformat');
 var S = require('string');
+var Q = require("q");
 
 var processArgs = process.argv.slice(2);
 if (processArgs == null) {
@@ -59,7 +60,7 @@ function responseHasError(jsonOuterResponse, coinType) {
 
 function filterResults(coinType, jsonOuterResponse, yearsNeeded, maxPrice, skipWords) {
 	var coinMatches = [];
-	var coinResults = {results: coinMatches};
+	var coinResults = {results: coinMatches, coinType: coinType};
 
 	if (responseHasError(jsonOuterResponse, coinType)) {
 		return;
@@ -89,6 +90,7 @@ function filterResults(coinType, jsonOuterResponse, yearsNeeded, maxPrice, skipW
 	}
  	var paginationOutput = jsonResponse.paginationOutput[0];
 	coinResults["paginationOutput"] = paginationOutput;
+	coinResults["coinType"] = coinType;
 	return coinResults;
 }
 
@@ -131,18 +133,6 @@ exports.addFinderParams = function(urlArgs, searchKeywords, entriesPerPage, sort
 //	 	},
 }
 
-exports.doPull = function (coinType, urlArgs, yearsNeeded, maxPrice, skipWords, callback) {
-	var url = "http://svcs.ebay.com/services/search/FindingService/v1";
-	var getRes = client.get(url, urlArgs,
-        function(data, response){
-					var theResponseData =JSON.parse(data);
-					var matchedCoins = filterResults(coinType, theResponseData, yearsNeeded, maxPrice, skipWords);
-					callback(matchedCoins, coinType);
-	}).on('error', function(err) {
-		console.log("INVOCATION ERROR! %s", err);
-	});
-}
-
 exports._coinShouldBeFiltered = function(coinResult, skipWords) {
 	return coinShouldBeFiltered(coinResult, skipWords);
 }
@@ -177,4 +167,18 @@ exports.buildEbayRequestObject = function(urlArgs, searchKeywords, pageSize, asp
 	this.addFinderParams(urlArgs, searchKeywords, pageSize, sortOrder);
 	this.addCustomAspects(urlArgs, aspectNames);
 	this.addItemFilters(urlArgs, itemFilters);
+}
+
+exports.doPull = function (coinType, urlArgs, yearsNeeded, maxPrice, skipWords) {
+	var deferred = Q.defer();
+	var url = "http://svcs.ebay.com/services/search/FindingService/v1";
+	client.get(url, urlArgs,
+		function(data, response){
+					var theResponseData =JSON.parse(data);
+					var matchedCoins = filterResults(coinType, theResponseData, yearsNeeded, maxPrice, skipWords);
+					deferred.resolve(matchedCoins);
+				}).on('error', function(err) {
+					deferred.reject(err);
+				});
+	return deferred.promise;
 }
