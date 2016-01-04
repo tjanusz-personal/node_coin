@@ -169,6 +169,37 @@ exports.buildEbayRequestObject = function(urlArgs, searchKeywords, pageSize, asp
 	this.addItemFilters(urlArgs, itemFilters);
 }
 
+exports.collatePromisedResults = function(coinResults) {
+	// super hacky way to flatten out any sub arrays for the BIN results since they're multiple page result sets
+	var mergedArrays = [].concat.apply([], coinResults);
+  var allData = [];
+	var binData = [];
+	var allResults = { auction: allData, bin: binData};
+
+	for (var count = 0; count < mergedArrays.length; count++) {
+		collateCoinResult(mergedArrays[count], allData, binData);
+	}
+	return allResults;
+}
+
+function collateCoinResult(coinResults, coinData, binData) {
+	var results = coinResults["results"];
+	var coinType = coinResults["coinType"];
+	var paginationOutput = coinResults["paginationOutput"]
+	console.log("COIN TYPE: %s Matches: %s, Pages: %s", coinType, results.length, paginationOutput.totalEntries);
+	results.forEach(function(coinResult) {
+		if (coinType.indexOf("BIN") > 0) {
+			binData.push(coinResult);
+		} else {
+			coinData.push(coinResult);
+		}
+  });
+}
+
+exports._collateCoinResult = function(coinResults, coinData, binData) {
+		return collateCoinResult(coinResults, coinData, binData);
+}
+
 exports.doPull = function (coinType, urlArgs, yearsNeeded, maxPrice, skipWords) {
 	var deferred = Q.defer();
 	var url = "http://svcs.ebay.com/services/search/FindingService/v1";
