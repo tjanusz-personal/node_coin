@@ -1,5 +1,7 @@
 var ebayUtils = require('./ebay_utils.js');
 var dateFormat = require('dateformat');
+var Q = require("q");
+var clone = require("clone");
 
 // Ebay custom aspects for Grading Certifications
 var aspectNames = [
@@ -11,8 +13,15 @@ var itemFilters = [	{ ListingType: ["Auction", "AuctionWithBIN"] } ];
 var yearsNeeded = ["1971", "1973", "1974", "1975", "1978", "1980", "1981", "1982", "1983", "1984", "1997", "2008"];
 var urlArgs = {};
 var skipWords = ["1971-D", "1974-D"];
-ebayUtils.buildEbayRequestObject(urlArgs, "Kennedy Half Dollar", 100, aspectNames, itemFilters);
+ebayUtils.buildEbayRequestObject(urlArgs, "Kennedy Half Dollar", 50, aspectNames, itemFilters);
 
-exports.doPull = function (callback) {
-	return ebayUtils.doPull("Kennedy", urlArgs, yearsNeeded, 50, skipWords);
+exports.doPull = function () {
+	var pagesToCall = [];
+	for (var count = 1; count <=1; count++) {
+		var urlArgs2 = clone(urlArgs);
+		urlArgs2.parameters["paginationInput.pageNumber"] = count;
+		pagesToCall.push(ebayUtils.doPull("Kennedy", urlArgs2, yearsNeeded, 50, skipWords));
+	}
+	var allPromise = Q.all(pagesToCall);
+	return allPromise;
 }

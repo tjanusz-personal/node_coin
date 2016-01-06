@@ -3,6 +3,9 @@ console.log("Start to read Ebay auctions for coins I need");
 var Q = require("q");
 var ebayUtils = require('./ebay_utils.js');
 
+// run with debugger
+// ./node_modules/node-inspector/bin/node-debug.js node_coin.js MY_KEY HERE
+
 //var lincolnPull = require('./pull_lincoln.js');
 var indianPull = require('./pull_Indian.js');
 var buffaloPull = require('./pull_Buffalo.js');
@@ -25,6 +28,7 @@ function writeToXLSXFile(allResults) {
 // Queue up all requests
 var allPromise = Q.all([ indianPull.doPull(),  buffaloPull.doPull(), kennedyPull.doPull(),
 	jeffPull.doPull(), mercPull.doPull(), libPull.doPull(), jeffBINPull.doPull(), kennedyBINPull.doPull() ]);
+// var allPromise = Q.all([ kennedyPull.doPull() ]);
 
 // Write out all responses
 allPromise.then(ebayUtils.collatePromisedResults).then(writeToXLSXFile).then(null, console.log);

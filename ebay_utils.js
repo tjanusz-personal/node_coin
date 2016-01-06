@@ -65,12 +65,19 @@ function filterResults(coinType, jsonOuterResponse, yearsNeeded, maxPrice, skipW
 	if (responseHasError(jsonOuterResponse, coinType)) {
 		return;
 	}
+
 	var jsonResponse = jsonOuterResponse.findItemsByKeywordsResponse[0];
 	var searchResult = jsonResponse.searchResult;
 	var items = searchResult[0].item;
 	if (items == null) {
 		return coinResults;
 	}
+
+	if (items.length == 0) {
+		console.log("EMPTY RESPONSE");
+		return coinResults;
+	}
+
 	for (var icount = 0; icount < items.length; icount++) {
 		var item = items[icount];
 		var currentPrice = item.sellingStatus[0].currentPrice[0];
