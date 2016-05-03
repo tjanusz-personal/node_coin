@@ -1,6 +1,6 @@
 var util = require('util');
 var dateFormat = require('dateformat');
-var XLSX = require('XLSX');
+var XLSX = require('xlsx');
 
 
 function Workbook() {

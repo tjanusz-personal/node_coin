@@ -9,13 +9,13 @@ var ebayUtils = require('./ebay_utils.js');
 //var lincolnPull = require('./pull_lincoln.js');
 var indianPull = require('./pull_Indian.js');
 var buffaloPull = require('./pull_Buffalo.js');
-var kennedyPull = require('./pull_kennedy.js');
+var kennedyPull = require('./pull_Kennedy.js');
 var mercPull = require('./pull_Mercury.js');
 var jeffPull = require('./pull_Jefferson.js');
 var libPull = require('./pull_Liberty.js');
 // BIN now calls that use multiple results
 var jeffBINPull = require('./pull_JeffersonBIN.js');
-var kennedyBINPull = require('./pull_kennedyBIN.js');
+var kennedyBINPull = require('./pull_KennedyBIN.js');
 var xlsxWriter = require('./xlsx_writer.js');
 
 function writeToXLSXFile(allResults) {
