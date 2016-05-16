@@ -6,6 +6,9 @@ var sinon = require("sinon");
 var events = require("events");
 var dateFormat = require('dateformat');
 
+// TO run these tests
+// ./node_modules/mocha/bin/mocha
+
 describe('EbayUtils', function() {
 
 	describe('needCoin()', function() {
