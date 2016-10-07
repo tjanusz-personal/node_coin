@@ -11,8 +11,8 @@ var aspectNames = [
 ];
 // Ebay itemFilters for ListingTypes I care about
 var itemFilters = [	{ ListingType: ["FixedPrice"] } ];
-var yearsNeeded = ["1971", "1973", "1974", "1975", "1978", "1980", "1981", "1982", "1983", "1984", "1997", "2008"];
-var skipWords = ["1971 D", "1971-D", "1973 D", "1973-D", "2008 P", "2008-P", "1980-P", "1971 S", "1978-P"];
+var yearsNeeded = ["1971", "1973", "1974", "1978", "1981", "1982", "1983", "1984"];
+var skipWords = ["1971 D", "1971-D", "1973 D", "1973-D", "1980-P", "1971 S", "1978-P"];
 var maxPrice = 50;
 var urlArgs = {};
 ebayUtils.buildEbayRequestObject(urlArgs, "Kennedy Half Dollar", 100, aspectNames, itemFilters, "PricePlusShippingLowest");

@@ -10,7 +10,7 @@ var aspectNames = [
 ];
 // Ebay itemFilters for ListingTypes I care about
 var itemFilters = [	{ ListingType: ["Auction", "AuctionWithBIN"] } ];
-var yearsNeeded = ["1971", "1973", "1974", "1975", "1978", "1980", "1981", "1982", "1983", "1984", "1997", "2008"];
+var yearsNeeded = ["1971", "1973", "1974", "1978", "1981", "1982", "1983", "1984"];
 var urlArgs = {};
 var skipWords = ["1971-D", "1974-D"];
 ebayUtils.buildEbayRequestObject(urlArgs, "Kennedy Half Dollar", 50, aspectNames, itemFilters);

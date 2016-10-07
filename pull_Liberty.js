@@ -7,7 +7,7 @@ var aspectNames = [
 ];
 // Ebay itemFilters for ListingTypes I care about
 var itemFilters = [	{ ListingType: ["Auction", "AuctionWithBIN"] } ];
-var yearsNeeded = ["1884", "1885", "1887", "1886", "1888", "1892", "1894", "1895", "1898"];
+var yearsNeeded = ["1884", "1885", "1886", "1895"];
 var skipWords = ["Scratched", "Damaged", "Scratch", "Damage"];
 
 var urlArgs = {};
